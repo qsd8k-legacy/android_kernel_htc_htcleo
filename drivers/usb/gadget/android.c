@@ -62,6 +62,7 @@
 #include "f_rmnet.c"
 #endif
 #include "f_audio_source.c"
+#include "f_fs.c"
 #include "f_mass_storage.c"
 #include "u_serial.c"
 #include "u_sdio.c"
@@ -1844,7 +1845,10 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 	struct android_dev *dev = dev_get_drvdata(pdev);
 	char *name;
 	char buf[256], *b;
+	char aliases[256], *a;
 	int err;
+	int is_ffs;
+	int ffs_enabled = 0;
 
 	pr_info("%s: buff: %s\n", __func__, buff);
 	return size;
@@ -1856,11 +1860,37 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 
 	while (b) {
 		name = strsep(&b, ",");
-		if (name) {
-			err = android_enable_function(dev, name);
-			if (err)
-				pr_err("android_usb: Cannot enable '%s'", name);
+		if (!name)
+			continue;
+
+		is_ffs = 0;
+		strlcpy(aliases, dev->ffs_aliases, sizeof(aliases));
+		a = aliases;
+
+		while (a) {
+			char *alias = strsep(&a, ",");
+			if (alias && !strcmp(name, alias)) {
+				is_ffs = 1;
+				break;
+			}
 		}
+
+		if (is_ffs) {
+			if (ffs_enabled)
+				continue;
+			err = android_enable_function(dev, "ffs");
+			if (err)
+				pr_err("android_usb: Cannot enable ffs (%d)",
+									err);
+			else
+				ffs_enabled = 1;
+			continue;
+		}
+
+		err = android_enable_function(dev, name);
+		if (err)
+			pr_err("android_usb: Cannot enable '%s' (%d)",
+							   name, err);
 	}
 
 	return size;
