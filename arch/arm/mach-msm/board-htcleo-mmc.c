@@ -156,6 +156,7 @@ static struct mmc_platform_data htcleo_sdslot_data =
 	.msmsdcc_fmin	= 144000,
 	.msmsdcc_fmid	= 25000000,
 	.msmsdcc_fmax	= 50000000,
+	.nonremovable	= 1,
 };
 
 static uint32_t wifi_on_gpio_table[] =
