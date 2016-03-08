@@ -37,8 +37,6 @@
 #include "proc_comm.h"
 #include "pmic.h"
 
-#undef HTCLEO_DEBUG_MMC
-
 static int __init htcleo_disablesdcard_setup(char *str)
 {
 	opt_disable_sdcard = (bool)simple_strtol(str, NULL, 0);
@@ -242,9 +240,9 @@ int htcleo_wifi_set_carddetect(int val)
 {
 	pr_info("%s: %d\n", __func__, val);
 	htcleo_wifi_cd = val;
-	if (wifi_status_cb) {
+	if (wifi_status_cb)
 		wifi_status_cb(val, wifi_status_cb_devid);
-	} else
+	else
 		pr_warning("%s: Nobody to notify\n", __func__);
 	return 0;
 }
@@ -287,9 +285,9 @@ int __init htcleo_init_mmc(unsigned debug_uart)
 
 	printk("%s()+\n", __func__);
 
-	/* initial WIFI_SHUTDOWN# */	
+	/* initial WIFI_SHUTDOWN# */
 	id = PCOM_GPIO_CFG(HTCLEO_GPIO_WIFI_SHUTDOWN_N, 0, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_2MA),
-	msm_proc_comm(PCOM_RPC_GPIO_TLMM_CONFIG_EX, &id, NULL);
+	msm_proc_comm(PCOM_RPC_GPIO_TLMM_CONFIG_EX, &id, 0);
 	gpio_set_value(HTCLEO_GPIO_WIFI_SHUTDOWN_N, 0);
 
 	msm_add_sdcc(1, &htcleo_wifi_data, 0, 0);
@@ -308,14 +306,12 @@ int __init htcleo_init_mmc(unsigned debug_uart)
 	sdslot_vreg = vreg_get(NULL, "gp6");
 	if (IS_ERR(sdslot_vreg))
 		return PTR_ERR(sdslot_vreg);
-//	wlan_vreg_1 = PM_VREG_WLAN_ID;
-//	wlan_vreg_2 = PM_VREG_MSME1_ID;
+
 
 	wlan_vreg_3 = vreg_get(NULL, "rftx");
 	if (IS_ERR(wlan_vreg_3))
 		return PTR_ERR(wlan_vreg_3);
 
-	//set_irq_wake(MSM_GPIO_TO_INT(HTCLEO_GPIO_SD_STATUS), 1);
 	msm_add_sdcc(2, &htcleo_sdslot_data,
 		      MSM_GPIO_TO_INT(HTCLEO_GPIO_SD_STATUS),
 		      IORESOURCE_IRQ_LOWEDGE | IORESOURCE_IRQ_HIGHEDGE);
@@ -324,111 +320,3 @@ done:
 	printk("%s()-\n", __func__);
 	return 0;
 }
-
-#if defined(HTCLEO_DEBUG_MMC) && defined(CONFIG_DEBUG_FS)
-
-static int htcleommc_dbg_wifi_reset_set(void *data, u64 val)
-{
-	htcleo_wifi_reset((int) val);
-	return 0;
-}
-
-static int htcleommc_dbg_wifi_reset_get(void *data, u64 *val)
-{
-	*val = htcleo_wifi_reset_state;
-	return 0;
-}
-
-static int htcleommc_dbg_wifi_cd_set(void *data, u64 val)
-{
-	htcleo_wifi_set_carddetect((int) val);
-	return 0;
-}
-
-static int htcleommc_dbg_wifi_cd_get(void *data, u64 *val)
-{
-	*val = htcleo_wifi_cd;
-	return 0;
-}
-
-static int htcleommc_dbg_wifi_pwr_set(void *data, u64 val)
-{
-	htcleo_wifi_power((int) val);
-	return 0;
-}
-
-static int htcleommc_dbg_wifi_pwr_get(void *data, u64 *val)
-{
-	*val = htcleo_wifi_power_state;
-	return 0;
-}
-
-static int htcleommc_dbg_sd_pwr_set(void *data, u64 val)
-{
-	htcleo_sdslot_switchvdd(NULL, (unsigned int) val);
-	return 0;
-}
-
-static int htcleommc_dbg_sd_pwr_get(void *data, u64 *val)
-{
-	*val = sdslot_vdd;
-	return 0;
-}
-
-static int htcleommc_dbg_sd_cd_set(void *data, u64 val)
-{
-	return -ENOSYS;
-}
-
-static int htcleommc_dbg_sd_cd_get(void *data, u64 *val)
-{
-	*val = htcleo_sdslot_data.status(NULL);
-	return 0;
-}
-
-DEFINE_SIMPLE_ATTRIBUTE(htcleommc_dbg_wifi_reset_fops,
-			htcleommc_dbg_wifi_reset_get,
-			htcleommc_dbg_wifi_reset_set, "%llu\n");
-
-DEFINE_SIMPLE_ATTRIBUTE(htcleommc_dbg_wifi_cd_fops,
-			htcleommc_dbg_wifi_cd_get,
-			htcleommc_dbg_wifi_cd_set, "%llu\n");
-
-DEFINE_SIMPLE_ATTRIBUTE(htcleommc_dbg_wifi_pwr_fops,
-			htcleommc_dbg_wifi_pwr_get,
-			htcleommc_dbg_wifi_pwr_set, "%llu\n");
-
-DEFINE_SIMPLE_ATTRIBUTE(htcleommc_dbg_sd_pwr_fops,
-			htcleommc_dbg_sd_pwr_get,
-			htcleommc_dbg_sd_pwr_set, "%llu\n");
-
-DEFINE_SIMPLE_ATTRIBUTE(htcleommc_dbg_sd_cd_fops,
-			htcleommc_dbg_sd_cd_get,
-			htcleommc_dbg_sd_cd_set, "%llu\n");
-
-static int __init htcleommc_dbg_init(void)
-{
-	struct dentry *dent;
-
-	if (!machine_is_htcleo() && !machine_is_htcleo())
-		return 0;
-
-	dent = debugfs_create_dir("htcleo_mmc_dbg", 0);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
-
-	debugfs_create_file("wifi_reset", 0644, dent, NULL,
-			    &htcleommc_dbg_wifi_reset_fops);
-	debugfs_create_file("wifi_cd", 0644, dent, NULL,
-			    &htcleommc_dbg_wifi_cd_fops);
-	debugfs_create_file("wifi_pwr", 0644, dent, NULL,
-			    &htcleommc_dbg_wifi_pwr_fops);
-	debugfs_create_file("sd_pwr", 0644, dent, NULL,
-			    &htcleommc_dbg_sd_pwr_fops);
-	debugfs_create_file("sd_cd", 0644, dent, NULL,
-			    &htcleommc_dbg_sd_cd_fops);
-	return 0;
-}
-
-device_initcall(htcleommc_dbg_init);
-#endif
