@@ -237,21 +237,6 @@ void notify_vbus_change_intr(void)
 
 #endif
 /* -------------------------------------------------------------------------- */
-/* For sleep charging screen. */
-static int zcharge_enabled;
-static int htc_is_zcharge_enabled(void)
-{
-	return zcharge_enabled;
-}
-static int __init enable_zcharge_setup(char *str)
-{
-	int cal = simple_strtol(str, NULL, 0);
-
-	zcharge_enabled = cal;
-	return 1;
-}
-__setup("enable_zcharge=", enable_zcharge_setup);
-
 static int htc_is_cable_in(void)
 {
 	if (!htc_batt_info.update_time) {
@@ -268,8 +253,6 @@ static int htc_is_cable_in(void)
  **/
 static int __htc_power_policy(void)
 {
-	if (!zcharge_enabled)
-		return 0;
 
 	if (htc_is_cable_in())
 		return 1;
@@ -1816,4 +1799,3 @@ module_init(htc_battery_init);
 MODULE_DESCRIPTION("HTC Battery Driver");
 MODULE_LICENSE("GPL");
 EXPORT_SYMBOL(htc_is_cable_in);
-EXPORT_SYMBOL(htc_is_zcharge_enabled);

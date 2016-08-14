@@ -569,7 +569,7 @@ static void *__alloc_remap_buffer(struct device *dev, size_t size, gfp_t gfp,
 	*ret_page = page;
 	return ptr;
 }
-
+#if defined(CONFIG_CMA)
 static void *__alloc_from_pool(struct device *dev, size_t size,
 			       struct page **ret_page, const void *caller)
 {
@@ -620,6 +620,7 @@ static int __free_from_pool(void *cpu_addr, size_t size)
 	arm_vmregion_free(&coherent_head, c);
 	return 1;
 }
+#endif
 
 static void *__alloc_from_contiguous(struct device *dev, size_t size,
 				     pgprot_t prot, struct page **ret_page,
@@ -640,12 +641,14 @@ static void *__alloc_from_contiguous(struct device *dev, size_t size,
 	return page_address(page);
 }
 
+#if defined(CONFIG_CMA)
 static void __free_from_contiguous(struct device *dev, struct page *page,
 				   size_t size)
 {
 	__dma_remap(page, size, pgprot_kernel, false);
 	dma_release_from_contiguous(dev, page, size >> PAGE_SHIFT);
 }
+#endif
 
 static inline pgprot_t __get_dma_pgprot(struct dma_attrs *attrs, pgprot_t prot)
 {
@@ -667,10 +670,12 @@ static inline pgprot_t __get_dma_pgprot(struct dma_attrs *attrs, pgprot_t prot)
 #define nommu() 1
 
 #define __alloc_remap_buffer(dev, size, gfp, prot, ret, c)	NULL
-#define __alloc_from_pool(dev, size, ret_page, c)		NULL
 #define __alloc_from_contiguous(dev, size, prot, ret, w)	NULL
+#if defined(CONFIG_CMA)
+#define __alloc_from_pool(dev, size, ret_page, c)		NULL
 #define __free_from_pool(cpu_addr, size)			0
 #define __free_from_contiguous(dev, page, size)			do { } while (0)
+#endif
 #define __dma_free_remap(cpu_addr, size)			do { } while (0)
 #define __get_dma_pgprot(attrs, prot)				__pgprot(0)
 
