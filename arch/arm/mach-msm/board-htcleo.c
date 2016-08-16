@@ -562,6 +562,23 @@ void htcleo_add_usb_devices(void)
 	platform_device_register(&android_usb_device);
 }
 
+#if defined(CONFIG_ANDROID_RAM_CONSOLE_EARLY_INIT)
+static struct resource ram_console_resources[] = {
+	{
+		.start	= MSM_RAM_CONSOLE_BASE,
+		.end	= MSM_RAM_CONSOLE_BASE + MSM_RAM_CONSOLE_SIZE - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+};
+
+static struct platform_device ram_console_device = {
+	.name		= "ram_console",
+	.id		= -1,
+	.num_resources	= ARRAY_SIZE(ram_console_resources),
+	.resource	= ram_console_resources,
+};
+#endif
+
 ///////////////////////////////////////////////////////////////////////
 // Flashlight
 ///////////////////////////////////////////////////////////////////////
@@ -1116,6 +1133,9 @@ struct platform_device btn_backlight_manager = {
 
 static struct platform_device *devices[] __initdata =
 {
+#if defined(CONFIG_ANDROID_RAM_CONSOLE_EARLY_INIT)
+	&ram_console_device,
+#endif
 #if !defined(CONFIG_MSM_SERIAL_DEBUGGER)
 	&msm_device_uart1,
 #endif
@@ -1390,11 +1410,19 @@ static void __init qsd8x50_init_irq(void)
 	msm_init_sirc();
 }
 
+#if defined(CONFIG_ANDROID_RAM_CONSOLE_EARLY_INIT)
+int __init ram_console_early_init(void);
+#endif
+
 static void __init htcleo_map_io(void)
 {
 	msm_map_qsd8x50_io();
 	if (socinfo_init() < 0)
 		printk(KERN_ERR "%s: socinfo_init() failed!\n",__func__);
+
+#if defined(CONFIG_ANDROID_RAM_CONSOLE_EARLY_INIT)
+	ram_console_early_init();
+#endif
 }
 
 extern struct sys_timer msm_timer;
