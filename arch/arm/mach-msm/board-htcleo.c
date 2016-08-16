@@ -565,8 +565,8 @@ void htcleo_add_usb_devices(void)
 #if defined(CONFIG_ANDROID_RAM_CONSOLE_EARLY_INIT)
 static struct resource ram_console_resources[] = {
 	{
-		.start	= MSM_RAM_CONSOLE_BASE,
-		.end	= MSM_RAM_CONSOLE_BASE + MSM_RAM_CONSOLE_SIZE - 1,
+		.start	= (size_t)MSM_RAM_CONSOLE_BASE,
+		.end	= (size_t)MSM_RAM_CONSOLE_BASE + (size_t)MSM_RAM_CONSOLE_SIZE - 1,
 		.flags	= IORESOURCE_MEM,
 	},
 };
@@ -655,11 +655,9 @@ static uint32_t camera_on_gpio_table[] =
 	PCOM_GPIO_CFG(15, 1, GPIO_OUTPUT, GPIO_PULL_UP, GPIO_8MA), /* MCLK */
 };
 
-int config_camera_on_gpios(void)
+void config_camera_on_gpios(void)
 {
 	config_gpio_table(camera_on_gpio_table, ARRAY_SIZE(camera_on_gpio_table));
-
-	return 0;
 }
 
 void config_camera_off_gpios(void)
