@@ -1009,14 +1009,12 @@ early_param("pmem_adsp_size", pmem_adsp_size_setup);
 
 #ifdef CONFIG_ION_MSM
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-#define MSM_ION_HEAP_NUM        3
+#define MSM_ION_HEAP_NUM        2
 #else
 #define MSM_ION_HEAP_NUM        1
 #endif
 
-#define MSM_ION_AUDIO_SIZE  0x80000
-#define MSM_ION_SF_SIZE  0x2000000
-#define ADSP_RPC_PROG           0x3000000a
+#define MSM_ION_SF_SIZE  MSM_PMEM_MDP_SIZE
 
 static struct ion_co_heap_pdata co_ion_pdata = {
 	.adjacent_mem_id = INVALID_HEAP_ID,
@@ -1030,13 +1028,6 @@ static struct ion_platform_heap htcleo_heaps[] = {
 			.name	= ION_VMALLOC_HEAP_NAME,
 		},
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-		{
-			.id	= ION_AUDIO_HEAP_ID,
-			.type	= ION_HEAP_TYPE_CARVEOUT,
-			.name	= ION_AUDIO_HEAP_NAME,
-			.memory_type = ION_EBI_TYPE,
-			.extra_data = (void *) &co_ion_pdata,
-		},
 		{
 			.id	= ION_SF_HEAP_ID,
 			.type	= ION_HEAP_TYPE_CARVEOUT,
@@ -1287,8 +1278,7 @@ static void __init size_pmem_devices(void)
 static void __init size_ion_devices(void)
 {
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-	ion_pdata.heaps[1].size = MSM_ION_AUDIO_SIZE;
-	ion_pdata.heaps[2].size = MSM_ION_SF_SIZE;
+	ion_pdata.heaps[1].size = MSM_ION_SF_SIZE;
 #endif
 }
 static void __init reserve_pmem_memory(void) {
@@ -1299,7 +1289,6 @@ static void __init reserve_pmem_memory(void) {
 }
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 static void __init reserve_ion_memory(void) {
-	qsd8x50_reserve_table[MEMTYPE_EBI1].size += MSM_ION_AUDIO_SIZE;
 	qsd8x50_reserve_table[MEMTYPE_EBI1].size += MSM_ION_SF_SIZE;
 }
 #endif
