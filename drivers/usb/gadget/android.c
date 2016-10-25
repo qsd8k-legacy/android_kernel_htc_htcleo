@@ -188,6 +188,8 @@ struct android_dev {
 	bool RndisDisableMPDecision;
 	int (*match)(int product_id, int intrsharing);
 	int autobot_mode;
+
+	char ffs_aliases[256];
 };
 
 static struct class *android_class;
