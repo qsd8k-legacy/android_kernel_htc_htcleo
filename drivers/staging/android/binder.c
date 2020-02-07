@@ -3546,17 +3546,6 @@ static int binder_open(struct inode *nodp, struct file *filp)
 			&binder_proc_fops);
 	}
 
-	if (binder_proc_dir_entry_proc) {
-		char strbuf[11];
-		snprintf(strbuf, sizeof(strbuf), "%u", proc->pid);
-		if (exist_proc_entry(strbuf, binder_proc_dir_entry_proc))
-			remove_proc_entry(strbuf, binder_proc_dir_entry_proc);
-
-		create_proc_read_entry(strbuf, S_IRUGO,
-				       binder_proc_dir_entry_proc,
-				       procfs_binder_read_proc_proc, proc);
-	}
-
 	return 0;
 }
 
@@ -3592,11 +3581,6 @@ static int binder_release(struct inode *nodp, struct file *filp)
 {
 	struct binder_proc *proc = filp->private_data;
 	debugfs_remove(proc->debugfs_entry);
-	if (binder_proc_dir_entry_proc) {
-		char strbuf[11];
-		snprintf(strbuf, sizeof(strbuf), "%u", proc->pid);
-		remove_proc_entry(strbuf, binder_proc_dir_entry_proc);
-	}
 	binder_defer_work(proc, BINDER_DEFERRED_RELEASE);
 
 	return 0;
